@@ -35,9 +35,11 @@ echo "===== 1. CREAR / LIMPIAR CADENAS ====="
 
 iptables -N WG-INPUT 2>/dev/null || true
 iptables -N WG-FORWARD 2>/dev/null || true
+iptables -t nat -N WG-NAT 2>/dev/null || true
 
 iptables -F WG-INPUT
 iptables -F WG-FORWARD
+iptables -t nat -F WG-NAT
 
 echo "OK"
 
@@ -57,6 +59,13 @@ iptables -C FORWARD \
 iptables -I FORWARD 1 \
     -i "$WG_IF" \
     -j WG-FORWARD
+
+iptables -t nat -C POSTROUTING \
+    -s 10.8.0.0/24 \
+    -j WG-NAT 2>/dev/null ||
+iptables -t nat -I POSTROUTING 1 \
+    -s 10.8.0.0/24 \
+    -j WG-NAT
 
 echo "OK"
 
@@ -91,10 +100,10 @@ get_network() {
     local name="$1"
 
     awk -v network="$name" '
-        NF >= 3 &&
+        NF >= 4 &&
         $1 !~ /^#/ &&
         $1 == network {
-            print $2, $3
+            print $2, $3, $4
         }
     ' "$NETWORKS_FILE"
 }
@@ -154,14 +163,36 @@ apply_network() {
         exit 1
     fi
 
-    read -r cidr iface <<<"$line"
+    local cidr iface nat
+    read -r cidr iface nat <<<"$line"
 
-    echo "  NETWORK $network_name -> $cidr via $iface"
+    if ! ip link show "$iface" >/dev/null 2>&1; then
+        echo "ERROR: interfaz inexistente para $network_name: $iface"
+        exit 1
+    fi
+
+    echo "  NETWORK $network_name -> $cidr via $iface NAT=$nat"
 
     iptables -A WG-FORWARD \
         -s "${peer_ip}/32" \
         -d "$cidr" \
         -j ACCEPT
+
+    if [[ "$nat" == "yes" ]]; then
+
+        if ! iptables -t nat -C WG-NAT \
+            -s 10.8.0.0/24 \
+            -d "$cidr" \
+            -o "$iface" \
+            -j MASQUERADE 2>/dev/null; then
+
+            iptables -t nat -A WG-NAT \
+                -s 10.8.0.0/24 \
+                -d "$cidr" \
+                -o "$iface" \
+                -j MASQUERADE
+        fi
+    fi
 }
 
 echo
@@ -283,6 +314,10 @@ iptables -L WG-INPUT -n -v --line-numbers
 echo
 echo "[WG-FORWARD]"
 iptables -L WG-FORWARD -n -v --line-numbers
+
+echo
+echo "[WG-NAT]"
+iptables -t nat -L WG-NAT -n -v --line-numbers
 
 echo
 echo "======================================================"
