@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 
@@ -28,6 +29,12 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+app.mount(
+    "/static",
+    StaticFiles(directory=str(PROJECT / "dashboard/static")),
+    name="static",
+)
+
 
 def run_command(args: list[str]) -> str:
     result = subprocess.run(
@@ -39,11 +46,14 @@ def run_command(args: list[str]) -> str:
     return result.stdout
 
 
-def run_admin(script: str, *args: str) -> str:
+def run_admin(action: str, *args: str) -> str:
+    wrapper = PROJECT / "scripts/dashboard_admin.sh"
+
     cmd = [
         "sudo",
         "-n",
-        str(PROJECT / "scripts" / script),
+        str(wrapper),
+        action,
         *args,
     ]
 
@@ -56,7 +66,11 @@ def run_admin(script: str, *args: str) -> str:
     if result.returncode != 0:
         raise HTTPException(
             status_code=500,
-            detail=result.stderr or result.stdout or "admin command failed",
+            detail=(
+                result.stderr
+                or result.stdout
+                or "admin command failed"
+            ),
         )
 
     return result.stdout
@@ -163,6 +177,70 @@ def is_online(timestamp: int) -> bool:
     return (now - timestamp) <= 180
 
 
+def format_bytes(value: int) -> str:
+    units = ["B", "KB", "MB", "GB", "TB"]
+
+    size = float(value)
+
+    for unit in units:
+        if size < 1024 or unit == units[-1]:
+            if unit == "B":
+                return f"{int(size)} {unit}"
+
+            return f"{size:.1f} {unit}"
+
+        size /= 1024
+
+    return f"{value} B"
+
+
+def relative_time(timestamp: int) -> str:
+    if timestamp <= 0:
+        return "nunca"
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    delta = max(0, now - timestamp)
+
+    if delta < 60:
+        return f"hace {delta} s"
+
+    if delta < 3600:
+        return f"hace {delta // 60} min"
+
+    if delta < 86400:
+        return f"hace {delta // 3600} h"
+
+    return f"hace {delta // 86400} d"
+
+
+def parse_role(role_name: str) -> dict[str, Any]:
+    path = ROLES_DIR / f"{role_name}.conf"
+
+    if not path.exists():
+        return {
+            "name": role_name,
+            "server_access": "no",
+            "dns_access": "no",
+            "services": [],
+            "networks": [],
+            "allowed_ips": "",
+        }
+
+    data = parse_meta(path)
+
+    services = data.get("SERVICES", "").split()
+    networks = data.get("NETWORKS", "").split()
+
+    return {
+        "name": role_name,
+        "server_access": data.get("SERVER_ACCESS", "no"),
+        "dns_access": data.get("DNS_ACCESS", "no"),
+        "services": services,
+        "networks": networks,
+        "allowed_ips": data.get("ALLOWED_IPS", ""),
+    }
+
+
 def peer_view() -> list[dict[str, Any]]:
     live = wg_dump()
     result: list[dict[str, Any]] = []
@@ -183,6 +261,10 @@ def peer_view() -> list[dict[str, Any]]:
                 "latest_handshake": timestamp,
                 "rx": wg.get("rx", 0),
                 "tx": wg.get("tx", 0),
+                "rx_human": format_bytes(int(wg.get("rx", 0) or 0)),
+                "tx_human": format_bytes(int(wg.get("tx", 0) or 0)),
+                "handshake_human": relative_time(timestamp),
+                "role_detail": parse_role(meta.get("ROLE", "none")),
             }
         )
 
@@ -216,6 +298,9 @@ def dashboard(request: Request):
         context={
             "peers": peer_view(),
             "roles": roles(),
+            "app_name": "WireGuardVPN",
+            "app_description": "Concentrador VPN Broadcast",
+            "hostname": "videosrv",
         },
     )
 
@@ -230,7 +315,7 @@ def create_peer(
         raise HTTPException(status_code=400, detail="invalid role")
 
     run_admin(
-        "peer_add.sh",
+        "add",
         name,
         endpoint,
         role,
@@ -248,7 +333,7 @@ def change_role(
         raise HTTPException(status_code=400, detail="invalid role")
 
     run_admin(
-        "peer_set_role.sh",
+        "set-role",
         name,
         role,
     )
@@ -259,7 +344,7 @@ def change_role(
 @app.post("/admin/peers/{name}/revoke")
 def revoke_peer(name: str):
     run_admin(
-        "peer_remove.sh",
+        "remove",
         name,
     )
 
@@ -272,7 +357,7 @@ def refresh_peer(
     endpoint: str = Form(...),
 ):
     run_admin(
-        "peer_refresh_config.sh",
+        "refresh",
         name,
         endpoint,
     )
@@ -287,9 +372,16 @@ def peer_qr(name: str):
     if not conf.exists():
         raise HTTPException(status_code=404, detail="profile not found")
 
-    output = run_admin(
-        "peer_qr.sh",
-        name,
+    result = subprocess.run(
+        [
+            "/usr/bin/qrencode",
+            "-t",
+            "ansiutf8",
+            str(conf),
+        ],
+        text=True,
+        capture_output=True,
+        check=True,
     )
 
-    return PlainTextResponse(output)
+    return PlainTextResponse(result.stdout)

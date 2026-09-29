@@ -7,6 +7,10 @@
 <title>WireGuardVPN — Ecuavisa UIO</title>
 
 <style>
+:root {
+    color-scheme: dark;
+}
+
 body {
     margin: 0;
     font-family: system-ui, sans-serif;
@@ -24,12 +28,40 @@ main {
     padding: 24px;
 }
 
+h1, h2, h3 {
+    margin-top: 0;
+}
+
 .card {
     background: #172033;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 18px;
     margin-bottom: 20px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.stat .value {
+    font-size: 1.7rem;
+    font-weight: 700;
+}
+
+.stat .label {
+    font-size: .82rem;
+    color: #94a3b8;
 }
 
 .grid {
@@ -64,7 +96,7 @@ th, td {
     padding: 10px;
     border-bottom: 1px solid #334155;
     text-align: left;
-    vertical-align: middle;
+    vertical-align: top;
 }
 
 th {
@@ -80,8 +112,14 @@ th {
     color: #94a3b8;
 }
 
-.revoked {
-    opacity: .45;
+.badge {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    font-size: .78rem;
+    margin: 2px;
 }
 
 .actions {
@@ -91,29 +129,293 @@ th {
 }
 
 .small {
-    font-size: .82rem;
+    font-size: .8rem;
     color: #94a3b8;
+}
+
+details summary {
+    cursor: pointer;
+}
+
+.revoked-table {
+    opacity: .65;
 }
 
 @media (max-width: 900px) {
     table {
-        font-size: .85rem;
+        font-size: .82rem;
     }
 
     th, td {
         padding: 7px;
     }
 }
+.brand-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px 24px;
+
+    background: #0b1220;
+    border-bottom: 1px solid var(--ev-border);
+}
+
+.brand-header-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.brand-logo {
+    width: 82px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.brand-header h1 {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.brand-subtitle {
+    color: var(--ev-text-muted);
+    margin-top: 4px;
+    font-size: .9rem;
+}
+
+.brand-status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--ev-text-muted);
+    font-size: .85rem;
+}
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ev-green);
+    display: inline-block;
+}
+
+.brand-footer {
+    margin: 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    padding: 18px 24px;
+
+    border-radius: 12px;
+    border: 1px solid var(--ev-border);
+
+    background: #0b1220;
+}
+
+.brand-footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-footer-logo img {
+    width: 72px;
+}
+
+.brand-footer-info {
+    flex: 1;
+    color: var(--ev-text-muted);
+    font-size: .85rem;
+    line-height: 1.6;
+}
+
+.brand-footer-status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--ev-text-muted);
+    font-size: .85rem;
+}
+
+.app-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #07111f;
+
+    overflow: hidden;
+
+    transition:
+        opacity .35s ease,
+        visibility .35s ease;
+}
+
+.app-splash.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-content {
+    position: relative;
+    z-index: 3;
+
+    text-align: center;
+
+    width: min(420px, 85vw);
+}
+
+.splash-logo {
+    width: 220px;
+    max-width: 65vw;
+}
+
+.splash-company {
+    font-size: 1.8rem;
+    font-weight: 750;
+    letter-spacing: .1em;
+    margin-top: 20px;
+}
+
+.splash-app {
+    margin-top: 14px;
+    font-size: 1.2rem;
+    color: #bfdbfe;
+}
+
+.splash-description {
+    margin-top: 8px;
+    color: var(--ev-text-muted);
+}
+
+.splash-progress {
+    height: 5px;
+    background: #334155;
+    border-radius: 99px;
+
+    margin-top: 32px;
+
+    overflow: hidden;
+}
+
+.splash-progress div {
+    width: 35%;
+    height: 100%;
+
+    background: var(--ev-blue);
+
+    animation: splash-progress 1s ease forwards;
+}
+
+.splash-loading {
+    margin-top: 10px;
+    color: var(--ev-text-muted);
+    font-size: .8rem;
+}
+
+.splash-wave {
+    position: absolute;
+
+    width: 900px;
+    height: 260px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(31, 111, 255, .18);
+
+    transform: rotate(-15deg);
+}
+
+.splash-wave-one {
+    left: -300px;
+    bottom: 80px;
+}
+
+.splash-wave-two {
+    right: -420px;
+    top: 80px;
+}
+
+@keyframes splash-progress {
+    from {
+        width: 5%;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+@media (max-width: 700px) {
+    .brand-status {
+        display: none;
+    }
+
+    .brand-logo {
+        width: 60px;
+    }
+
+    .brand-header h1 {
+        font-size: 1rem;
+    }
+
+    .brand-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
 </style>
+<link
+    rel="stylesheet"
+    href="/static/css/ecuavisa-theme.css">
 </head>
 
 <body>
-
+{% include "splash.html" %}
+{% include "header.html" %}
 <header>
-<h2>WireGuardVPN — Ecuavisa UIO</h2>
+    <h2>WireGuardVPN — Ecuavisa UIO</h2>
+    <div class="small">Concentrador VPN Broadcast · videosrv</div>
 </header>
 
 <main>
+
+{% set active = peers | selectattr("status", "equalto", "active") | list %}
+{% set revoked = peers | selectattr("status", "equalto", "revoked") | list %}
+{% set online = active | selectattr("online", "equalto", true) | list %}
+
+<div class="stats">
+
+<div class="stat">
+    <div class="value">{{ active | length }}</div>
+    <div class="label">Peers activos</div>
+</div>
+
+<div class="stat">
+    <div class="value">{{ online | length }}</div>
+    <div class="label">Online</div>
+</div>
+
+<div class="stat">
+    <div class="value">{{ revoked | length }}</div>
+    <div class="label">Revocados</div>
+</div>
+
+<div class="stat">
+    <div class="value">{{ roles | length }}</div>
+    <div class="label">Roles</div>
+</div>
+
+</div>
 
 <div class="card">
 
@@ -139,9 +441,7 @@ th {
 {% endfor %}
 </select>
 
-<button type="submit">
-Crear peer
-</button>
+<button type="submit">Crear peer</button>
 
 </div>
 
@@ -151,29 +451,28 @@ Crear peer
 
 <div class="card">
 
-<h3>Peers</h3>
+<h3>Peers activos</h3>
 
 <table>
 
 <thead>
 <tr>
-<th>Estado</th>
-<th>Nombre</th>
-<th>IP</th>
-<th>Rol</th>
-<th>Endpoint</th>
-<th>RX</th>
-<th>TX</th>
-<th>Estado</th>
-<th>Acciones</th>
+    <th>Estado</th>
+    <th>Peer</th>
+    <th>IP VPN</th>
+    <th>Rol</th>
+    <th>Handshake</th>
+    <th>Tráfico</th>
+    <th>Permisos</th>
+    <th>Acciones</th>
 </tr>
 </thead>
 
 <tbody>
 
-{% for peer in peers %}
+{% for peer in active %}
 
-<tr class="{{ 'revoked' if peer.status == 'revoked' else '' }}">
+<tr>
 
 <td>
 {% if peer.online %}
@@ -184,80 +483,74 @@ Crear peer
 </td>
 
 <td>
-<strong>{{ peer.name }}</strong>
-<br>
-<span class="small">
-{{ peer.public_key[:12] }}...
-</span>
+<strong>{{ peer.name }}</strong><br>
+<span class="small">{{ peer.endpoint or '-' }}</span><br>
+<span class="small">{{ peer.public_key[:14] }}...</span>
 </td>
 
 <td>{{ peer.vpn_ip }}</td>
 
 <td>
-{% if peer.status == 'active' %}
-
-<form
-    method="post"
-    action="/admin/peers/{{ peer.name }}/role">
-
-<select
-    name="role"
-    onchange="this.form.submit()">
-
+<form method="post" action="/admin/peers/{{ peer.name }}/role">
+<select name="role" onchange="this.form.submit()">
 {% for role in roles %}
 <option
     value="{{ role }}"
-    {% if role == peer.role %}selected{% endif %}>
-    {{ role }}
+    {% if role == peer.role %}selected{% endif %}
+>
+{{ role }}
 </option>
 {% endfor %}
-
 </select>
-
 </form>
-
-{% else %}
-{{ peer.role }}
-{% endif %}
 </td>
 
-<td>{{ peer.endpoint or '-' }}</td>
+<td>
+{{ peer.handshake_human }}
+</td>
 
-<td>{{ peer.rx }}</td>
-<td>{{ peer.tx }}</td>
-
-<td>{{ peer.status }}</td>
+<td>
+↓ {{ peer.rx_human }}<br>
+↑ {{ peer.tx_human }}
+</td>
 
 <td>
 
-{% if peer.status == 'active' %}
+{% if peer.role_detail.server_access == "yes" %}
+<span class="badge">Servidor</span>
+{% endif %}
+
+{% if peer.role_detail.dns_access == "yes" %}
+<span class="badge">DNS</span>
+{% endif %}
+
+{% for service in peer.role_detail.services %}
+<span class="badge">{{ service }}</span>
+{% endfor %}
+
+{% for network in peer.role_detail.networks %}
+<span class="badge">{{ network }}</span>
+{% endfor %}
+
+</td>
+
+<td>
 
 <div class="actions">
 
-<form
-    method="get"
-    action="/admin/peers/{{ peer.name }}/qr">
-
-<button type="submit">
-QR
-</button>
-
+<form method="get" action="/admin/peers/{{ peer.name }}/qr">
+<button type="submit">QR</button>
 </form>
 
 <form
     method="post"
     action="/admin/peers/{{ peer.name }}/revoke"
-    onsubmit="return confirm('¿Revocar {{ peer.name }}?')">
-
-<button type="submit">
-Revocar
-</button>
-
+    onsubmit="return confirm('¿Revocar {{ peer.name }}?')"
+>
+<button type="submit">Revocar</button>
 </form>
 
 </div>
-
-{% endif %}
 
 </td>
 
@@ -271,7 +564,62 @@ Revocar
 
 </div>
 
-</main>
+<div class="card">
 
+<details>
+
+<summary>
+Histórico de peers revocados ({{ revoked | length }})
+</summary>
+
+<br>
+
+<table class="revoked-table">
+
+<thead>
+<tr>
+    <th>Peer</th>
+    <th>IP utilizada</th>
+    <th>Creado</th>
+    <th>PublicKey</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for peer in revoked %}
+
+<tr>
+<td>{{ peer.name }}</td>
+<td>{{ peer.vpn_ip }}</td>
+<td>{{ peer.created_at }}</td>
+<td class="small">{{ peer.public_key }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</details>
+
+</div>
+
+</main>
+{% include "footer.html" %}
+<script>
+window.addEventListener("load", () => {
+    const splash = document.getElementById("app-splash");
+
+    if (!splash) {
+        return;
+    }
+
+    setTimeout(() => {
+        splash.classList.add("hidden");
+    }, 700);
+});
+</script>
 </body>
 </html>
