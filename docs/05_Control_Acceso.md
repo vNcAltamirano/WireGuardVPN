@@ -86,3 +86,28 @@ Snapshot previo:
 Restauracion:
 
     sudo ./scripts/firewall_rollback.sh
+
+## DNS corporativo
+
+Servidor DNS:
+
+    192.168.2.10
+
+Validado:
+
+    apuntadores.uio.ecuavisa.com
+        -> videosrv.ecuavisa.com
+        -> 192.168.2.168
+
+El DNS interno tambien resuelve dominios publicos.
+
+Por tanto los peers WireGuard pueden utilizar:
+
+    DNS = 192.168.2.10
+
+sin perder resolucion de Internet.
+
+El acceso DNS se limita mediante firewall a:
+
+    UDP 53
+    TCP 53
