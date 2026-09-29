@@ -69,10 +69,18 @@ if [[ ! -f "$SERVER_PUBLIC_KEY_FILE" ]]; then
 fi
 
 install -d -m 700 -o root -g root "$PEER_DIR"
-install -d -m 700 -o root -g root "$EXPORT_DIR"
 
-touch "$INVENTORY"
-chmod 600 "$INVENTORY"
+PROJECT_USER="$(stat -c '%U' "$PROJECT")"
+PROJECT_GROUP="$(stat -c '%G' "$PROJECT")"
+
+install -d     -m 700     -o "$PROJECT_USER"     -g "$PROJECT_GROUP"     "$EXPORT_DIR"
+
+if [[ ! -f "$INVENTORY" ]]; then
+    install         -m 600         -o "$PROJECT_USER"         -g "$PROJECT_GROUP"         /dev/null         "$INVENTORY"
+else
+    chown "$PROJECT_USER:$PROJECT_GROUP" "$INVENTORY"
+    chmod 600 "$INVENTORY"
+fi
 
 PRIVATE_KEY="${PEER_DIR}/${PEER_NAME}.private.key"
 PUBLIC_KEY="${PEER_DIR}/${PEER_NAME}.public.key"
@@ -185,8 +193,7 @@ EOF_CLIENT
 
 chmod 600 "$PEER_CONF"
 
-cp "$PEER_CONF" "$EXPORT_CONF"
-chmod 600 "$EXPORT_CONF"
+install     -m 600     -o "$PROJECT_USER"     -g "$PROJECT_GROUP"     "$PEER_CONF"     "$EXPORT_CONF"
 
 echo "OK"
 
