@@ -168,3 +168,46 @@ Hardening y retirada de exposición pública.
 
 Fase 9
 Backup, restore, monitoreo y documentación final.
+
+## Estado validado - Fase 3
+
+WireGuard operativo:
+
+    wg0 = 10.8.0.1/24
+    UDP = 51820
+    MTU = 1360
+
+Primer cliente Android validado mediante red movil.
+
+Se verifico:
+
+- handshake WireGuard
+- trafico bidireccional
+- acceso a servicios locales de videosrv
+- acceso VPN -> LAN 192.168.2.0/24
+- forwarding wg0 -> eno1
+- MASQUERADE
+- retorno LAN -> VPN
+- acceso HTTP a equipos internos
+- ICMP bidireccional
+
+Arquitectura validada:
+
+    Android
+        |
+        | WireGuard
+        v
+    wg0 / 10.8.0.1
+        |
+        | forwarding + NAT
+        v
+    eno1 / 192.168.2.168
+        |
+        v
+    LAN 192.168.2.0/24
+
+Los perfiles cliente permanecen excluidos de Git.
+
+Siguiente etapa:
+
+    Fase 4 - DNS interno y acceso a multiples redes corporativas
