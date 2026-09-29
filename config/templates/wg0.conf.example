@@ -6,22 +6,16 @@ PrivateKey = <SERVER_PRIVATE_KEY>
 MTU = 1360
 SaveConfig = false
 
-# Routing autorizado inicialmente:
+# Firewall / NAT / RBAC:
 #
-# VPN:
-#   10.8.0.0/24
+# Managed independently by:
 #
-# LAN:
-#   192.168.2.0/24
+#   /srv/WireGuardVPN/scripts/firewall_apply.sh
 #
-# WAN/LAN interface:
-#   eno1
+# Chains:
 #
-# NAT:
-#   solamente 10.8.0.0/24 -> 192.168.2.0/24
+#   WG-INPUT
+#   WG-FORWARD
+#   WG-NAT
 #
-# La configuracion real reside en:
-#
-#   /etc/wireguard/wg0.conf
-#
-# Los peers se gestionan independientemente.
+# Peers are persisted below as individual [Peer] sections.

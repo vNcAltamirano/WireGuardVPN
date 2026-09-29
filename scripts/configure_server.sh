@@ -185,18 +185,10 @@ PrivateKey = ${SERVER_PRIVATE_KEY}
 MTU = ${WG_MTU}
 SaveConfig = false
 
-# VPN -> LAN
-PostUp = iptables -C FORWARD -i ${WG_IF} -o ${LAN_IF} -s ${WG_NETWORK} -d ${LAN_NETWORK} -j ACCEPT 2>/dev/null || iptables -A FORWARD -i ${WG_IF} -o ${LAN_IF} -s ${WG_NETWORK} -d ${LAN_NETWORK} -j ACCEPT
-
-# LAN -> VPN solamente para conexiones existentes/relacionadas
-PostUp = iptables -C FORWARD -i ${LAN_IF} -o ${WG_IF} -s ${LAN_NETWORK} -d ${WG_NETWORK} -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || iptables -A FORWARD -i ${LAN_IF} -o ${WG_IF} -s ${LAN_NETWORK} -d ${WG_NETWORK} -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-
-# NAT solamente VPN -> LAN 192.168.2.0/24
-PostUp = iptables -t nat -C POSTROUTING -s ${WG_NETWORK} -d ${LAN_NETWORK} -o ${LAN_IF} -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s ${WG_NETWORK} -d ${LAN_NETWORK} -o ${LAN_IF} -j MASQUERADE
-
-PostDown = iptables -D FORWARD -i ${WG_IF} -o ${LAN_IF} -s ${WG_NETWORK} -d ${LAN_NETWORK} -j ACCEPT 2>/dev/null || true
-PostDown = iptables -D FORWARD -i ${LAN_IF} -o ${WG_IF} -s ${LAN_NETWORK} -d ${WG_NETWORK} -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
-PostDown = iptables -t nat -D POSTROUTING -s ${WG_NETWORK} -d ${LAN_NETWORK} -o ${LAN_IF} -j MASQUERADE 2>/dev/null || true
+# Firewall and NAT are managed by:
+# /srv/WireGuardVPN/scripts/firewall_apply.sh
+#
+# Do not add PostUp/PostDown firewall rules here.
 
 # Peers are managed separately.
 EOF_CONF
