@@ -1,0 +1,44 @@
+# ============================================================
+# WireGuardVPN - Ecuavisa UIO
+# ============================================================
+
+# Secrets / WireGuard private material
+*.key
+*.private
+*.secret
+*.conf.private
+
+# Generated client profiles
+config/peers/*.conf
+data/peers/*.conf
+data/peers/*.png
+data/peers/*.svg
+
+# Runtime
+runtime/*
+!runtime/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Backups
+backups/*
+!backups/.gitkeep
+
+# Snapshots generated locally
+context_snapshot.txt
+
+# Environment / credentials
+.env
+.env.*
+credentials/
+secrets/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
