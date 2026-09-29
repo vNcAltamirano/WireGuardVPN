@@ -42,3 +42,9 @@ secrets/
 *.swp
 *.swo
 *~
+
+# Python / uv
+dashboard/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
