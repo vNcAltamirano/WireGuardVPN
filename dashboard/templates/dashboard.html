@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>WireGuardVPN — Ecuavisa UIO</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+header {
+    padding: 18px 24px;
+    background: #111827;
+    border-bottom: 1px solid #334155;
+}
+
+main {
+    padding: 24px;
+}
+
+.card {
+    background: #172033;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+input, select, button {
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border-radius: 6px;
+    border: 1px solid #475569;
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1e293b;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background: #111827;
+}
+
+.online {
+    color: #4ade80;
+    font-weight: 700;
+}
+
+.offline {
+    color: #94a3b8;
+}
+
+.revoked {
+    opacity: .45;
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.small {
+    font-size: .82rem;
+    color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+    table {
+        font-size: .85rem;
+    }
+
+    th, td {
+        padding: 7px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>WireGuardVPN — Ecuavisa UIO</h2>
+</header>
+
+<main>
+
+<div class="card">
+
+<h3>Nuevo peer</h3>
+
+<form method="post" action="/admin/peers">
+
+<div class="grid">
+
+<input
+    name="name"
+    placeholder="android-reportero-01"
+    required>
+
+<input
+    name="endpoint"
+    value="ebc.vnc.homes:51820"
+    required>
+
+<select name="role">
+{% for role in roles %}
+<option value="{{ role }}">{{ role }}</option>
+{% endfor %}
+</select>
+
+<button type="submit">
+Crear peer
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>Peers</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Estado</th>
+<th>Nombre</th>
+<th>IP</th>
+<th>Rol</th>
+<th>Endpoint</th>
+<th>RX</th>
+<th>TX</th>
+<th>Estado</th>
+<th>Acciones</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for peer in peers %}
+
+<tr class="{{ 'revoked' if peer.status == 'revoked' else '' }}">
+
+<td>
+{% if peer.online %}
+<span class="online">● ONLINE</span>
+{% else %}
+<span class="offline">● OFFLINE</span>
+{% endif %}
+</td>
+
+<td>
+<strong>{{ peer.name }}</strong>
+<br>
+<span class="small">
+{{ peer.public_key[:12] }}...
+</span>
+</td>
+
+<td>{{ peer.vpn_ip }}</td>
+
+<td>
+{% if peer.status == 'active' %}
+
+<form
+    method="post"
+    action="/admin/peers/{{ peer.name }}/role">
+
+<select
+    name="role"
+    onchange="this.form.submit()">
+
+{% for role in roles %}
+<option
+    value="{{ role }}"
+    {% if role == peer.role %}selected{% endif %}>
+    {{ role }}
+</option>
+{% endfor %}
+
+</select>
+
+</form>
+
+{% else %}
+{{ peer.role }}
+{% endif %}
+</td>
+
+<td>{{ peer.endpoint or '-' }}</td>
+
+<td>{{ peer.rx }}</td>
+<td>{{ peer.tx }}</td>
+
+<td>{{ peer.status }}</td>
+
+<td>
+
+{% if peer.status == 'active' %}
+
+<div class="actions">
+
+<form
+    method="get"
+    action="/admin/peers/{{ peer.name }}/qr">
+
+<button type="submit">
+QR
+</button>
+
+</form>
+
+<form
+    method="post"
+    action="/admin/peers/{{ peer.name }}/revoke"
+    onsubmit="return confirm('¿Revocar {{ peer.name }}?')">
+
+<button type="submit">
+Revocar
+</button>
+
+</form>
+
+</div>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</main>
+
+</body>
+</html>

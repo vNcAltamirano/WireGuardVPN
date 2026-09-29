@@ -1,0 +1,14 @@
+[project]
+name = "wireguardvpn-dashboard"
+version = "0.2.0"
+description = "Dashboard tecnico WireGuardVPN Ecuavisa UIO"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "fastapi",
+    "jinja2",
+    "python-multipart",
+    "uvicorn",
+]
+
+[tool.uv]
+package = false
