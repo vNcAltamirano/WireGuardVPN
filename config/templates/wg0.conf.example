@@ -1,0 +1,27 @@
+[Interface]
+
+Address = 10.8.0.1/24
+ListenPort = 51820
+PrivateKey = <SERVER_PRIVATE_KEY>
+MTU = 1360
+SaveConfig = false
+
+# Routing autorizado inicialmente:
+#
+# VPN:
+#   10.8.0.0/24
+#
+# LAN:
+#   192.168.2.0/24
+#
+# WAN/LAN interface:
+#   eno1
+#
+# NAT:
+#   solamente 10.8.0.0/24 -> 192.168.2.0/24
+#
+# La configuracion real reside en:
+#
+#   /etc/wireguard/wg0.conf
+#
+# Los peers se gestionan independientemente.
