@@ -48,3 +48,8 @@ dashboard/.venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# TLS runtime/generated material
+config/tls/*.csr
+config/tls/*.crt
+config/tls/*.key
