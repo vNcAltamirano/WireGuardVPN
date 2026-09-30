@@ -323,7 +323,13 @@ echo "===== 10. REGENERAR FIREWALL ====="
 echo
 echo "===== 11. VALIDACION ====="
 
-wg show "$WG_IF" peer "$CLIENT_PUBLIC_KEY"
+if ! wg show "$WG_IF" peers | grep -Fxq "$CLIENT_PUBLIC_KEY"; then
+    echo "ERROR: peer no encontrado en WireGuard live:" >&2
+    echo "  $PEER_NAME" >&2
+    exit 1
+fi
+
+echo "OK: peer presente en WireGuard live"
 
 echo
 echo "======================================================"
