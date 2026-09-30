@@ -1,0 +1,4 @@
+NAME=pc-mauro-01
+VPN_IP=10.8.0.4
+ROLE=tecnico
+ENABLED=yes
