@@ -373,6 +373,176 @@ details summary {
         align-items: flex-start;
     }
 }
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 20px;
+
+    padding: 16px 18px;
+
+    border: 1px solid var(--ev-border);
+    border-radius: var(--ev-radius);
+
+    background: var(--ev-card);
+}
+
+.toolbar h3 {
+    margin: 0 0 4px;
+}
+
+.primary-button {
+    background: var(--ev-blue);
+    border-color: var(--ev-blue);
+    color: white;
+    font-weight: 650;
+}
+
+.primary-button:hover {
+    background: var(--ev-blue-dark);
+}
+
+.ev-dialog {
+    width: min(480px, calc(100vw - 30px));
+
+    border: 1px solid var(--ev-border);
+    border-radius: 14px;
+
+    background: #111827;
+    color: var(--ev-text);
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.55);
+}
+
+.ev-dialog::backdrop {
+    background: rgba(0,0,0,.72);
+    backdrop-filter: blur(3px);
+}
+
+.ev-dialog form {
+    display: grid;
+    gap: 14px;
+}
+
+.ev-dialog label {
+    display: grid;
+    gap: 6px;
+
+    color: var(--ev-text-muted);
+    font-size: .85rem;
+}
+
+.ev-dialog input,
+.ev-dialog select {
+    width: 100%;
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    margin-bottom: 18px;
+}
+
+.dialog-header h3 {
+    margin: 0;
+}
+
+.icon-button {
+    border: 0;
+    background: transparent;
+
+    font-size: 1.5rem;
+    line-height: 1;
+
+    color: var(--ev-text-muted);
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+.qr-dialog {
+    width: min(430px, calc(100vw - 30px));
+}
+
+.qr-container {
+    display: flex;
+    justify-content: center;
+
+    padding: 22px;
+
+    border-radius: 12px;
+
+    background: white;
+}
+
+.qr-container img {
+    width: min(300px, 72vw);
+    height: auto;
+
+    image-rendering: crisp-edges;
+}
+
+.qr-warning {
+    margin-top: 14px;
+
+    padding: 10px 12px;
+
+    border: 1px solid rgba(245, 158, 11, .35);
+    border-radius: 8px;
+
+    background: rgba(245, 158, 11, .08);
+
+    color: #fbbf24;
+
+    font-size: .8rem;
+}
+
+@media (max-width: 700px) {
+    .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .toolbar .primary-button {
+        width: 100%;
+    }
+}
+
+
+.endpoint-note {
+    display: grid;
+    gap: 4px;
+
+    padding: 12px;
+
+    border: 1px solid var(--ev-border);
+    border-radius: 8px;
+
+    background: rgba(31, 111, 255, .06);
+}
+
+.endpoint-note span,
+.endpoint-note small {
+    color: var(--ev-text-muted);
+    font-size: .8rem;
+}
+
+.endpoint-note strong {
+    font-family: monospace;
+    color: #bfdbfe;
+}
+
 </style>
 <link
     rel="stylesheet"
@@ -396,17 +566,23 @@ details summary {
 <div class="stats">
 
 <div class="stat">
-    <div class="value">{{ active | length }}</div>
+    <div
+    class="value"
+    data-stat="active">{{ active | length }}</div>
     <div class="label">Peers activos</div>
 </div>
 
 <div class="stat">
-    <div class="value">{{ online | length }}</div>
+    <div
+    class="value"
+    data-stat="online">{{ online | length }}</div>
     <div class="label">Online</div>
 </div>
 
 <div class="stat">
-    <div class="value">{{ revoked | length }}</div>
+    <div
+    class="value"
+    data-stat="revoked">{{ revoked | length }}</div>
     <div class="label">Revocados</div>
 </div>
 
@@ -417,37 +593,83 @@ details summary {
 
 </div>
 
-<div class="card">
+<div class="toolbar">
 
+<div>
+<h3>Gestión de peers</h3>
+<div class="small">
+Alta, permisos, QR y revocación de clientes WireGuard
+</div>
+</div>
+
+<button
+    type="button"
+    class="primary-button"
+    onclick="openCreatePeer()">
++ Nuevo peer
+</button>
+
+</div>
+
+<dialog id="create-peer-dialog" class="ev-dialog">
+
+<div class="dialog-header">
 <h3>Nuevo peer</h3>
 
-<form method="post" action="/admin/peers">
+<button
+    type="button"
+    class="icon-button"
+    onclick="closeCreatePeer()">
+×
+</button>
+</div>
 
-<div class="grid">
+<form method="post" action="/admin/peers-auto">
 
+<label>
+Nombre del dispositivo
 <input
     name="name"
     placeholder="android-reportero-01"
     required>
+</label>
 
-<input
-    name="endpoint"
-    value="ebc.vnc.homes:51820"
-    required>
+<div class="endpoint-note">
+<span>Servidor VPN</span>
+<strong>{{ wg_endpoint }}</strong>
+<small>
+Configurado globalmente por WireGuardVPN
+</small>
+</div>
 
+<label>
+Rol inicial
 <select name="role">
 {% for role in roles %}
 <option value="{{ role }}">{{ role }}</option>
 {% endfor %}
 </select>
+</label>
 
-<button type="submit">Crear peer</button>
+<div class="dialog-actions">
+
+<button
+    type="button"
+    onclick="closeCreatePeer()">
+Cancelar
+</button>
+
+<button
+    type="submit"
+    class="primary-button">
+Crear peer
+</button>
 
 </div>
 
 </form>
 
-</div>
+</dialog>
 
 <div class="card">
 
@@ -472,19 +694,25 @@ details summary {
 
 {% for peer in active %}
 
-<tr>
+<tr data-peer="{{ peer.name }}">
 
 <td>
 {% if peer.online %}
-<span class="online">● ONLINE</span>
+<span
+    data-field="state"
+    class="online">● ONLINE</span>
 {% else %}
-<span class="offline">● OFFLINE</span>
+<span
+    data-field="state"
+    class="offline">● OFFLINE</span>
 {% endif %}
 </td>
 
 <td>
 <strong>{{ peer.name }}</strong><br>
-<span class="small">{{ peer.endpoint or '-' }}</span><br>
+<span
+    class="small"
+    data-field="endpoint">{{ peer.endpoint or '-' }}</span><br>
 <span class="small">{{ peer.public_key[:14] }}...</span>
 </td>
 
@@ -506,12 +734,14 @@ details summary {
 </td>
 
 <td>
+<span data-field="handshake">
 {{ peer.handshake_human }}
+</span>
 </td>
 
 <td>
-↓ {{ peer.rx_human }}<br>
-↑ {{ peer.tx_human }}
+↓ <span data-field="rx">{{ peer.rx_human }}</span><br>
+↑ <span data-field="tx">{{ peer.tx_human }}</span>
 </td>
 
 <td>
@@ -538,8 +768,20 @@ details summary {
 
 <div class="actions">
 
-<form method="get" action="/admin/peers/{{ peer.name }}/qr">
-<button type="submit">QR</button>
+<button
+    type="button"
+    onclick="openQr('{{ peer.name }}')">
+QR
+</button>
+
+<form
+    method="post"
+    action="/admin/peers/{{ peer.name }}/refresh-auto">
+<button
+    type="submit"
+    title="Regenerar perfil usando el endpoint oficial">
+Regenerar
+</button>
 </form>
 
 <form
@@ -607,6 +849,52 @@ Histórico de peers revocados ({{ revoked | length }})
 </div>
 
 </main>
+<dialog id="qr-dialog" class="ev-dialog qr-dialog">
+
+<div class="dialog-header">
+
+<div>
+<h3>Perfil WireGuard</h3>
+<div
+    id="qr-peer-name"
+    class="small">
+</div>
+</div>
+
+<button
+    type="button"
+    class="icon-button"
+    onclick="closeQr()">
+×
+</button>
+
+</div>
+
+<div class="qr-container">
+
+<img
+    id="qr-image"
+    alt="Código QR WireGuard">
+
+</div>
+
+<div class="qr-warning">
+Este QR contiene la clave privada del cliente.
+No compartir ni almacenar fuera de los canales autorizados.
+</div>
+
+<div class="dialog-actions">
+
+<button
+    type="button"
+    onclick="closeQr()">
+Cerrar
+</button>
+
+</div>
+
+</dialog>
+
 {% include "footer.html" %}
 <script>
 window.addEventListener("load", () => {
@@ -616,10 +904,25 @@ window.addEventListener("load", () => {
         return;
     }
 
+    const key = "wgvpnSplashSeen";
+
+    try {
+        if (sessionStorage.getItem(key) === "1") {
+            splash.classList.add("hidden");
+            return;
+        }
+
+        sessionStorage.setItem(key, "1");
+    } catch (_) {
+        // Continue normally if sessionStorage is unavailable.
+    }
+
     setTimeout(() => {
         splash.classList.add("hidden");
-    }, 700);
+    }, 350);
 });
 </script>
+<script src="/static/js/dashboard.js"></script>
+
 </body>
 </html>

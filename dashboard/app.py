@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
@@ -213,6 +213,36 @@ def relative_time(timestamp: int) -> str:
     return f"hace {delta // 86400} d"
 
 
+def client_defaults() -> dict[str, str]:
+    path = PROJECT / "config/server/client.conf"
+
+    values: dict[str, str] = {}
+
+    if not path.exists():
+        raise RuntimeError(
+            f"client defaults not found: {path}"
+        )
+
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+
+        values[key.strip()] = value.strip().strip('"')
+
+    endpoint = values.get("WG_ENDPOINT", "")
+
+    if not endpoint:
+        raise RuntimeError(
+            "WG_ENDPOINT is not configured"
+        )
+
+    return values
+
+
 def parse_role(role_name: str) -> dict[str, Any]:
     path = ROLES_DIR / f"{role_name}.conf"
 
@@ -226,18 +256,49 @@ def parse_role(role_name: str) -> dict[str, Any]:
             "allowed_ips": "",
         }
 
-    data = parse_meta(path)
+    values: dict[str, str] = {}
 
-    services = data.get("SERVICES", "").split()
-    networks = data.get("NETWORKS", "").split()
+    current_key: str | None = None
+    current_lines: list[str] = []
+
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+
+        if not line or line.startswith("#"):
+            continue
+
+        if current_key is not None:
+            if line == '"':
+                values[current_key] = " ".join(current_lines)
+                current_key = None
+                current_lines = []
+            else:
+                current_lines.append(line)
+
+            continue
+
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+
+        key = key.strip()
+        value = value.strip()
+
+        if value == '"':
+            current_key = key
+            current_lines = []
+            continue
+
+        values[key] = value.strip('"')
 
     return {
         "name": role_name,
-        "server_access": data.get("SERVER_ACCESS", "no"),
-        "dns_access": data.get("DNS_ACCESS", "no"),
-        "services": services,
-        "networks": networks,
-        "allowed_ips": data.get("ALLOWED_IPS", ""),
+        "server_access": values.get("SERVER_ACCESS", "no"),
+        "dns_access": values.get("DNS_ACCESS", "no"),
+        "services": values.get("SERVICES", "").split(),
+        "networks": values.get("NETWORKS", "").split(),
+        "allowed_ips": values.get("ALLOWED_IPS", ""),
     }
 
 
@@ -290,6 +351,18 @@ def api_roles() -> list[str]:
     return roles()
 
 
+@app.get("/api/peers/{name}")
+def api_peer(name: str) -> dict[str, Any]:
+    for peer in peer_view():
+        if peer["name"] == name:
+            return peer
+
+    raise HTTPException(
+        status_code=404,
+        detail="peer not found",
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse(
@@ -301,7 +374,44 @@ def dashboard(request: Request):
             "app_name": "WireGuardVPN",
             "app_description": "Concentrador VPN Broadcast",
             "hostname": "videosrv",
+            "wg_endpoint": client_defaults()["WG_ENDPOINT"],
         },
+    )
+
+
+@app.post("/admin/peers-auto")
+def create_peer_auto(
+    name: str = Form(...),
+    role: str = Form(...),
+):
+    endpoint = client_defaults()["WG_ENDPOINT"]
+
+    run_admin(
+        "add",
+        name,
+        endpoint,
+        role,
+    )
+
+    return RedirectResponse(
+        url="/",
+        status_code=303,
+    )
+
+
+@app.post("/admin/peers/{name}/refresh-auto")
+def refresh_peer_auto(name: str):
+    endpoint = client_defaults()["WG_ENDPOINT"]
+
+    run_admin(
+        "refresh",
+        name,
+        endpoint,
+    )
+
+    return RedirectResponse(
+        url="/",
+        status_code=303,
     )
 
 
@@ -365,23 +475,42 @@ def refresh_peer(
     return RedirectResponse("/", status_code=303)
 
 
-@app.get("/admin/peers/{name}/qr", response_class=PlainTextResponse)
+@app.get("/admin/peers/{name}/qr")
 def peer_qr(name: str):
     conf = EXPORT_DIR / f"{name}.conf"
 
     if not conf.exists():
-        raise HTTPException(status_code=404, detail="profile not found")
+        raise HTTPException(
+            status_code=404,
+            detail="profile not found",
+        )
 
     result = subprocess.run(
         [
             "/usr/bin/qrencode",
             "-t",
-            "ansiutf8",
+            "PNG",
+            "-s",
+            "6",
+            "-m",
+            "2",
+            "-o",
+            "-",
             str(conf),
         ],
-        text=True,
         capture_output=True,
-        check=True,
     )
 
-    return PlainTextResponse(result.stdout)
+    if result.returncode != 0:
+        raise HTTPException(
+            status_code=500,
+            detail="QR generation failed",
+        )
+
+    return Response(
+        content=result.stdout,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
