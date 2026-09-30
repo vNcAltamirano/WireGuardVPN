@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
@@ -475,6 +475,33 @@ def refresh_peer(
     return RedirectResponse("/", status_code=303)
 
 
+@app.get("/admin/peers/{name}/profile")
+def peer_profile(name: str):
+    if not name or name != Path(name).name:
+        raise HTTPException(
+            status_code=400,
+            detail="invalid peer name",
+        )
+
+    conf = EXPORT_DIR / f"{name}.conf"
+
+    if not conf.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="profile not found",
+        )
+
+    return FileResponse(
+        path=str(conf),
+        media_type="text/plain",
+        filename=f"{name}.conf",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+        },
+    )
+
+
 @app.get("/admin/peers/{name}/qr")
 def peer_qr(name: str):
     conf = EXPORT_DIR / f"{name}.conf"
@@ -496,6 +523,7 @@ def peer_qr(name: str):
             "2",
             "-o",
             "-",
+            "-r",
             str(conf),
         ],
         capture_output=True,

@@ -543,6 +543,29 @@ details summary {
     color: #bfdbfe;
 }
 
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 9px 10px;
+
+    border: 1px solid #475569;
+    border-radius: 6px;
+
+    background: #0f172a;
+    color: #e5e7eb;
+
+    text-decoration: none;
+
+    font-size: .85rem;
+}
+
+.action-link:hover {
+    background: #1e293b;
+}
+
 </style>
 <link
     rel="stylesheet"
@@ -773,6 +796,12 @@ Crear peer
     onclick="openQr('{{ peer.name }}')">
 QR
 </button>
+
+<a
+    class="action-link"
+    href="/admin/peers/{{ peer.name }}/profile">
+Descargar
+</a>
 
 <form
     method="post"
