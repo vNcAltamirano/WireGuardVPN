@@ -1,0 +1,7 @@
+Cmnd_Alias WGVPN_READ = \
+    /usr/bin/wg show wg0 dump
+
+Cmnd_Alias WGVPN_ADMIN = \
+    /usr/local/sbin/wireguardvpn-admin *
+
+wireguardvpn-dashboard ALL=(root) NOPASSWD: WGVPN_READ, WGVPN_ADMIN

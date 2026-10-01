@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT="/srv/WireGuardVPN"
+SCRIPTS="${PROJECT}/scripts"
+ROLES="${PROJECT}/config/roles"
+EXPORTS="${PROJECT}/data/peers"
+
+ACTION="${1:-}"
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+valid_peer() {
+    [[ "${1:-}" =~ ^[A-Za-z0-9._-]{1,64}$ ]]
+}
+
+valid_role() {
+    local role="${1:-}"
+
+    valid_peer "$role" &&
+    [[ -f "${ROLES}/${role}.conf" ]]
+}
+
+valid_endpoint() {
+    local endpoint="${1:-}"
+    local host port
+
+    [[ "$endpoint" == *:* ]] ||
+        return 1
+
+    host="${endpoint%:*}"
+    port="${endpoint##*:}"
+
+    [[ "$host" =~ ^[A-Za-z0-9._-]+$ ]] ||
+        return 1
+
+    [[ "$port" =~ ^[0-9]+$ ]] ||
+        return 1
+
+    (( port >= 1 && port <= 65535 ))
+}
+
+audit() {
+    logger \
+      -t wireguardvpn-admin \
+      -- "caller=${SUDO_USER:-unknown} action=${ACTION} peer=${2:-unknown}"
+}
+
+normalize_inventory() {
+    local inventory="${EXPORTS}/inventory.tsv"
+
+    if [[ -f "$inventory" ]]; then
+        chown root:wireguardvpn-ops "$inventory"
+        chmod 0640 "$inventory"
+    fi
+}
+
+
+normalize_profile() {
+    local peer="$1"
+    local conf="${EXPORTS}/${peer}.conf"
+
+    if [[ -f "$conf" ]]; then
+        chown root:wireguardvpn-ops "$conf"
+        chmod 0640 "$conf"
+    fi
+}
+
+[[ "$(id -u)" -eq 0 ]] ||
+    die "must run as root"
+
+trap normalize_inventory EXIT
+
+case "$ACTION" in
+
+    add)
+        [[ "$#" -eq 4 ]] ||
+            die "usage: add PEER ENDPOINT ROLE"
+
+        PEER="$2"
+        ENDPOINT="$3"
+        ROLE="$4"
+
+        valid_peer "$PEER" ||
+            die "invalid peer"
+
+        valid_endpoint "$ENDPOINT" ||
+            die "invalid endpoint"
+
+        valid_role "$ROLE" ||
+            die "invalid role"
+
+        "$SCRIPTS/peer_add.sh" \
+            "$PEER" \
+            "$ENDPOINT" \
+            "$ROLE"
+
+        normalize_profile "$PEER"
+        audit "$ACTION" "$PEER"
+        ;;
+
+    remove)
+        [[ "$#" -eq 2 ]] ||
+            die "usage: remove PEER"
+
+        PEER="$2"
+
+        valid_peer "$PEER" ||
+            die "invalid peer"
+
+        "$SCRIPTS/peer_remove.sh" \
+            "$PEER"
+
+        audit "$ACTION" "$PEER"
+        ;;
+
+    set-role)
+        [[ "$#" -eq 3 ]] ||
+            die "usage: set-role PEER ROLE"
+
+        PEER="$2"
+        ROLE="$3"
+
+        valid_peer "$PEER" ||
+            die "invalid peer"
+
+        valid_role "$ROLE" ||
+            die "invalid role"
+
+        "$SCRIPTS/peer_set_role.sh" \
+            "$PEER" \
+            "$ROLE"
+
+        audit "$ACTION" "$PEER"
+        ;;
+
+    refresh)
+        [[ "$#" -eq 3 ]] ||
+            die "usage: refresh PEER ENDPOINT"
+
+        PEER="$2"
+        ENDPOINT="$3"
+
+        valid_peer "$PEER" ||
+            die "invalid peer"
+
+        valid_endpoint "$ENDPOINT" ||
+            die "invalid endpoint"
+
+        "$SCRIPTS/peer_refresh_config.sh" \
+            "$PEER" \
+            "$ENDPOINT"
+
+        normalize_profile "$PEER"
+        audit "$ACTION" "$PEER"
+        ;;
+
+    *)
+        die "invalid action"
+        ;;
+
+esac
