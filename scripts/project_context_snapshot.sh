@@ -23,8 +23,9 @@ cd "$PROJECT" || exit 1
 
     echo
     echo "===== NETWORK ====="
-    ip -brief address show \
-      eno1 enp7s0 wg0 2>/dev/null || true
+    for iface in eno1 enp7s0 wg0; do
+        ip -brief address show dev "$iface" 2>/dev/null || true
+    done
 
     echo
     echo "===== ROUTES ====="
