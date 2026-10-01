@@ -13,6 +13,7 @@ INVENTORY="${EXPORT_DIR}/inventory.tsv"
 
 PEERS_META_DIR="${PROJECT}/config/peers"
 ROLES_DIR="${PROJECT}/config/roles"
+OPS_GROUP="wireguardvpn-ops"
 
 SERVER_PUBLIC_KEY_FILE="${WG_DIR}/server_public.key"
 
@@ -94,9 +95,9 @@ PROJECT_USER="$(stat -c '%U' "$PROJECT")"
 PROJECT_GROUP="$(stat -c '%G' "$PROJECT")"
 
 install -d \
-    -m 700 \
-    -o "$PROJECT_USER" \
-    -g "$PROJECT_GROUP" \
+    -m 0750 \
+    -o root \
+    -g "$OPS_GROUP" \
     "$EXPORT_DIR"
 
 install -d \
@@ -107,14 +108,14 @@ install -d \
 
 if [[ ! -f "$INVENTORY" ]]; then
     install \
-        -m 600 \
-        -o "$PROJECT_USER" \
-        -g "$PROJECT_GROUP" \
+        -m 0640 \
+        -o root \
+        -g "$OPS_GROUP" \
         /dev/null \
         "$INVENTORY"
 else
-    chown "$PROJECT_USER:$PROJECT_GROUP" "$INVENTORY"
-    chmod 600 "$INVENTORY"
+    chown "root:$OPS_GROUP" "$INVENTORY"
+    chmod 0640 "$INVENTORY"
 fi
 
 PRIVATE_KEY="${PEER_SECRET_DIR}/${PEER_NAME}.private.key"
@@ -274,9 +275,9 @@ echo "===== 7. GENERAR PERFIL CLIENTE ====="
 chmod 600 "$PEER_CONF"
 
 install \
-    -m 600 \
-    -o "$PROJECT_USER" \
-    -g "$PROJECT_GROUP" \
+    -m 0640 \
+    -o root \
+    -g "$OPS_GROUP" \
     "$PEER_CONF" \
     "$EXPORT_CONF"
 
@@ -310,8 +311,8 @@ printf '%s\t%s\t%s\t%s\t%s\n' \
     "active" \
     >> "$INVENTORY"
 
-chown "$PROJECT_USER:$PROJECT_GROUP" "$INVENTORY"
-chmod 600 "$INVENTORY"
+chown "root:$OPS_GROUP" "$INVENTORY"
+chmod 0640 "$INVENTORY"
 
 echo "OK"
 
