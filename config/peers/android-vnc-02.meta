@@ -1,0 +1,4 @@
+NAME=android-vnc-02
+VPN_IP=10.8.0.5
+ROLE=tecnico
+ENABLED=yes
