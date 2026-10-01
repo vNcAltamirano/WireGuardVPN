@@ -47,7 +47,7 @@ def run_command(args: list[str]) -> str:
 
 
 def run_admin(action: str, *args: str) -> str:
-    wrapper = PROJECT / "scripts/dashboard_admin.sh"
+    wrapper = Path("/usr/local/sbin/wireguardvpn-admin")
 
     cmd = [
         "sudo",
