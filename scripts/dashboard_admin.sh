@@ -39,6 +39,8 @@ fi
 
 ACTION="${1:-}"
 
+logger   -t wireguardvpn-admin   -- "user=${SUDO_USER:-unknown} action=${ACTION} args=${*:2}"
+
 case "$ACTION" in
 
     add)
