@@ -4,24 +4,13 @@ After=network-online.target wg-quick@wg0.service wireguardvpn-firewall.service
 Wants=network-online.target
 
 [Service]
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
-SystemCallArchitectures=native
-RestrictSUIDSGID=true
-RestrictNamespaces=true
-ProtectHostname=true
-ProtectKernelLogs=true
-PrivateDevices=true
+NoNewPrivileges=false
 
 # Security sandbox
 ProtectSystem=full
 ProtectHome=true
 PrivateTmp=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
 ProtectControlGroups=true
-ProtectClock=true
-LockPersonality=true
-RestrictRealtime=true
 UMask=0077
 
 # Required writable state
@@ -45,7 +34,6 @@ ExecStart=/srv/WireGuardVPN/dashboard/.venv/bin/uvicorn \
 Restart=on-failure
 RestartSec=3
 
-NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
