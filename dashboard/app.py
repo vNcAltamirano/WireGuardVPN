@@ -156,7 +156,7 @@ def inventory_rows() -> list[dict[str, str]]:
 
 def wg_dump() -> dict[str, dict[str, Any]]:
     output = run_command(
-        ["sudo", "-n", "/usr/bin/wg", "show", "wg0", "dump"]
+        ["sudo", "-n", "/usr/local/sbin/wireguardvpn-status"]
     )
     lines = output.strip().splitlines()
 

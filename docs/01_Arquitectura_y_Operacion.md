@@ -132,7 +132,7 @@ Dashboard FastAPI:
 
 Privilegios sudo permitidos exclusivamente:
 
-    /usr/bin/wg show wg0 dump
+    /usr/local/sbin/wireguardvpn-status
     /usr/local/sbin/wireguardvpn-admin *
 
 Privilege broker:

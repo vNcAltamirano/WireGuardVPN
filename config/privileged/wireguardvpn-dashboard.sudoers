@@ -1,5 +1,5 @@
 Cmnd_Alias WGVPN_READ = \
-    /usr/bin/wg show wg0 dump
+    /usr/local/sbin/wireguardvpn-status
 
 Cmnd_Alias WGVPN_ADMIN = \
     /usr/local/sbin/wireguardvpn-admin *

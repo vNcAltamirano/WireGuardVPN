@@ -50,7 +50,19 @@ audit() {
 }
 
 normalize_inventory() {
+    local data_dir="/srv/WireGuardVPN/data"
+    local peers_dir="${EXPORTS}"
     local inventory="${EXPORTS}/inventory.tsv"
+
+    if [[ -d "$data_dir" ]]; then
+        chown root:wireguardvpn-ops "$data_dir"
+        chmod 0750 "$data_dir"
+    fi
+
+    if [[ -d "$peers_dir" ]]; then
+        chown root:wireguardvpn-ops "$peers_dir"
+        chmod 0750 "$peers_dir"
+    fi
 
     if [[ -f "$inventory" ]]; then
         chown root:wireguardvpn-ops "$inventory"
