@@ -4,6 +4,8 @@ import csv
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from fastapi import FastAPI, Form, HTTPException
@@ -97,6 +99,34 @@ def parse_meta(path: Path) -> dict[str, str]:
     return data
 
 
+
+UI_TIMEZONE = ZoneInfo("America/Guayaquil")
+
+
+def format_ui_datetime(value: str) -> str:
+    """Convierte timestamp ISO a hora local Ecuavisa UIO."""
+    if not value:
+        return ""
+
+    try:
+        normalized = value
+
+        if normalized.endswith("Z"):
+            normalized = normalized[:-1] + "+00:00"
+
+        dt = datetime.fromisoformat(normalized)
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UI_TIMEZONE)
+
+        local_dt = dt.astimezone(UI_TIMEZONE)
+
+        return local_dt.strftime("%d/%m/%Y %H:%M:%S")
+
+    except (ValueError, TypeError):
+        return value
+
+
 def inventory_rows() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
 
@@ -115,7 +145,8 @@ def inventory_rows() -> list[dict[str, str]]:
                     "name": row[0],
                     "vpn_ip": row[1],
                     "public_key": row[2],
-                    "created_at": row[3],
+                    "created_at_iso": row[3],
+            "created_at": format_ui_datetime(row[3]),
                     "status": row[4],
                 }
             )
